@@ -38,14 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cmd := os.Args[(len(os.Args) - 1)]
-	if cmd == "up" {
+	cmd := os.Args[1]
+
+	switch cmd {
+	case "up":
 		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
 		}
-	}
-
-	if cmd == "down" {
+	case "down":
 		if err := m.Down(); err != nil && err != migrate.ErrNoChange {
 			log.Fatal(err)
 		}
