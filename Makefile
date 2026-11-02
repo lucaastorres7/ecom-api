@@ -15,6 +15,3 @@ migrate-up:
 
 migrate-down:
 	@go run cmd/migrate/main.go down
-
-migrate-force:
-	@go run cmd/migrate/main.go force 0
