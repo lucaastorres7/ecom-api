@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS order_items (
-  "id"        SERIAL NOT NULL,
+  "id"        SERIAL PRIMARY KEY,
   "orderId"   INT NOT NULL,
   "productId" INT NOT NULL,
   "quantity"  INT NOT NULL,
