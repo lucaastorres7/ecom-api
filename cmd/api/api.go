@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/lucaastorres7/ecom-api/service/product"
 	"github.com/lucaastorres7/ecom-api/service/user"
 )
 
@@ -33,12 +34,16 @@ func (s *APIServer) Run() error {
 	router := mux.NewRouter()
 	subrouter := router.PathPrefix("/api/v1").Subrouter()
 
+	// Data Layer
 	userStore := user.NewStore(s.db)
+	productStore := product.NewStore(s.db)
+
 	// Services
-	userHandler := user.NewHandler(
-		userStore,
-	)
+	userHandler := user.NewHandler(userStore)
 	userHandler.RegisterRoutes(subrouter)
+
+	productHandler := product.NewHandler(productStore)
+	productHandler.RegisterRoutes(subrouter)
 
 	log.Println("Listening on", s.addr)
 	return http.ListenAndServe(s.addr, router)

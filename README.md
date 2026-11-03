@@ -4,6 +4,7 @@
 
 ### Do Later
 - Tests for Password and JWT
+- Add a Create Products Route
 
 ### References
 - [Golang Standard Project Layout](https://github.com/golang-standards/project-layout)
