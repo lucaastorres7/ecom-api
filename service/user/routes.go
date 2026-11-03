@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/lucaastorres7/ecom-api/config"
 	"github.com/lucaastorres7/ecom-api/service/auth"
 	"github.com/lucaastorres7/ecom-api/types"
 	"github.com/lucaastorres7/ecom-api/utils"
@@ -63,7 +64,40 @@ func (h *Handler) handleGetUserById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
+	var payload types.LoginUserPayload
 
+	if err := utils.ParseJSON(r, &payload); err != nil {
+		utils.WriteError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := utils.Validate.Struct(payload); err != nil {
+		errors := err.(validator.ValidationErrors)
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid payload %v", errors))
+		return
+	}
+
+	u, err := h.store.GetUserByEmail(payload.Email)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
+		return
+	}
+
+	if !auth.ComparePassword(u.Password, payload.Password) {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid credentials"))
+		return
+	}
+
+	secret := config.Envs.TokenSecret
+	token, err := auth.CreateToken(secret, u.ID)
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{
+		"token": token,
+	})
 }
 
 func (h *Handler) handleRegister(w http.ResponseWriter, r *http.Request) {
