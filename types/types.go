@@ -4,6 +4,7 @@ import "time"
 
 // Sets rules to be implemented by other types
 type UserStore interface {
+	GetUsers() ([]User, error)
 	GetUserByEmail(email string) (*User, error)
 	GetUserById(id int) (*User, error)
 	CreateUser(User) error

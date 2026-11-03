@@ -18,52 +18,65 @@ func NewStore(db *sql.DB) *Store {
 }
 
 // Data Methods
-func (s *Store) GetUserByEmail(email string) (*types.User, error) {
-	rows, err := s.db.Query(`
-		SELECT * 
-		FROM users 
-		WHERE email = $1
-	`, email)
+func (s *Store) GetUsers() ([]types.User, error) {
+	var users []types.User
 
+	rows, err := s.db.Query(`
+		SELECT "id", "firstName", "lastName", "email", "createdAt"
+		FROM users
+		ORDER BY id
+	`)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	u := new(types.User)
 	for rows.Next() {
-		u, err = scanRowIntoUser(rows)
-		if err != nil {
+		var u types.User
+		if err := rows.Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.CreatedAt); err != nil {
 			return nil, err
 		}
+		users = append(users, u)
 	}
 
-	if u.ID == 0 {
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (s *Store) GetUserByEmail(email string) (*types.User, error) {
+	u := new(types.User)
+	err := s.db.QueryRow(`
+		SELECT "id", "firstName", "lastName", "email", "password", "createdAt"
+		FROM users
+		WHERE email = $1
+	`, email).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Password, &u.CreatedAt)
+
+	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	return u, nil
 }
 
 func (s *Store) GetUserById(id int) (*types.User, error) {
-	rows, err := s.db.Query(`
-		SELECT *
+	u := new(types.User)
+	err := s.db.QueryRow(`
+		SELECT "id", "firstName", "lastName", "email", "password", "createdAt"
 		FROM users
 		WHERE id = $1
-	`, id)
+	`, id).Scan(&u.ID, &u.FirstName, &u.LastName, &u.Email, &u.Password, &u.CreatedAt)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
 	if err != nil {
 		return nil, err
-	}
-
-	u := new(types.User)
-	for rows.Next() {
-		u, err = scanRowIntoUser(rows)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if u.ID == 0 {
-		return nil, fmt.Errorf("user not found")
 	}
 
 	return u, nil

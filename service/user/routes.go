@@ -3,6 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
@@ -29,9 +30,38 @@ func NewHandler(store types.UserStore) *Handler {
 func (h *Handler) RegisterRoutes(router *mux.Router) {
 	router.HandleFunc("/login", h.handleLogin).Methods("POST")
 	router.HandleFunc("/register", h.handleRegister).Methods("POST")
+	router.HandleFunc("/users", h.handleGetUsers).Methods("GET")
+	router.HandleFunc("/users/{id}", h.handleGetUserById).Methods("GET")
 }
 
 // Services
+func (h *Handler) handleGetUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.store.GetUsers()
+	if err != nil {
+		utils.WriteError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, users)
+}
+
+func (h *Handler) handleGetUserById(w http.ResponseWriter, r *http.Request) {
+	idStr := mux.Vars(r)["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		utils.WriteError(w, http.StatusBadRequest, fmt.Errorf("invalid user id"))
+		return
+	}
+
+	u, err := h.store.GetUserById(id)
+	if err != nil {
+		utils.WriteError(w, http.StatusNotFound, err)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, u)
+}
+
 func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 }
